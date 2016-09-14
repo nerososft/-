@@ -1,0 +1,91 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+		body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+	</style>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=XZHoeyZQjytz7trUHLhMOCnc"></script>
+	<title>路径规划</title>
+</head>
+<body>
+		<img id='car_to' style='position:fixed;z-index:1500;padding:10px;margin:10px;margin-left:10px;' src="__ROOT__/public/map/img/car_n.png"/>
+			<img id='walk_to' style='position:fixed;z-index:1500;padding:10px;margin:10px;margin-left:10px;margin-top:72px;' src="__ROOT__/public/map/img/walk_l.png"/>
+			<script src="//cdn.bootcss.com/jquery/3.0.0-beta1/jquery.min.js"></script>
+			<script>
+			var go_type=0;
+				$("#car_to").click(function(){
+						$("#car_to").attr("src","__ROOT__/public/map/img/car_l.png");
+						$("#walk_to").attr("src","__ROOT__/public/map/img/walk_n.png");
+						go_type=1;
+						 change_zuobiao($("#lla").val(),$("#lln").val(),go_type);
+				});
+				$("#walk_to").click(function(){
+					$("#car_to").attr("src","__ROOT__/public/map/img/car_n.png");
+					$("#walk_to").attr("src","__ROOT__/public/map/img/walk_l.png");
+					go_type=0;
+					 change_zuobiao($("#lla").val(),$("#lln").val(),go_type);
+				});
+			</script>
+	<div style="position:fixed;z-index:1000;width:5%;padding:10px;float:left;">
+		<center>
+			<img style='background:#000;padding:10px;margin-bottom:10px;opacity:0.3;border-radius:3px;' src="__ROOT__/public/map/img/car_n.png"/>
+			<img style='background:#000;padding:10px;margin-bottom:10px;opacity:0.3;border-radius:3px;'  src="__ROOT__/public/map/img/walk_l.png"/>
+		</center>
+</div>
+	<div id="allmap"></div>
+  <Volist name="data" id="d">
+  <input id="lo" type="hidden" value="{$d.location}">
+	<input id="longitude" type="hidden" value="{$d.lo}">
+	<input id="latitude" type="hidden" value="{$d.la}">
+		<input id="lla" type="hidden" value="{$d.lla}">
+			<input id="lln" type="hidden" value="{$d.lln}">
+  </Volist>
+</body>
+</html>
+<script type="text/javascript">
+function change_zuobiao(x,y,type){
+	var map = new BMap.Map("allmap");
+	if((x==""||x==0.0)&&(y==""||y==0.0))
+	{
+		x=$("#longitude").val();
+		y=$("#latitude").val();
+			var ggPoint = new BMap.Point(x,y);
+			map_go(ggPoint,map,type);
+	}else{
+
+	var ggPoint = new BMap.Point(x,y);
+ translateCallback = function (data){
+  if(data.status === 0) {
+
+		map_go(data.points[0],map,type);
+  }
+ }
+ 	 var convertor = new BMap.Convertor();
+ 	 var pointArr = [];
+ 	 pointArr.push(ggPoint);
+ 	 convertor.translate(pointArr, 1, 5, translateCallback)
+ }
+}
+function map_go(from_point,map,go_type){
+	map.centerAndZoom(from_point, 13);
+	var mk = new BMap.Marker(from_point);
+	map.addOverlay(mk);
+	map.panTo(from_point);
+	var new_point = new BMap.Point($("#longitude").val(),$("#latitude").val());
+	if(go_type==0){
+    var walking = new BMap.WalkingRoute(map, {renderOptions:{map: map, autoViewport: true}});
+    walking.setPolylinesSetCallback(function(routes){
+			for(var i = 0;i<routes.length;i++){
+				var route = routes[i].getPolyline();
+				route.setStrokeColor("rgb(255,0,0)");
+			}
+		});
+		walking.search(from_point,new_point);
+	}else if(go_type==1){
+		var driving = new BMap.DrivingRoute(map, {renderOptions:{map: map, autoViewport: true}});
+		driving.search(from_point,new_point);
+	}
+}
+ change_zuobiao($("#lla").val(),$("#lln").val(),0);
+</script>
